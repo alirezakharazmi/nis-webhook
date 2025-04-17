@@ -18,9 +18,26 @@ def run_attendance():
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         driver.implicitly_wait(10)
 
-        # TODO: ورود و پر کردن فرم حضور در اینجا اضافه خواهد شد
+        # وارد سایت شو
+        driver.get("https://pdks.nisantasi.edu.tr/")
+
+        # وارد کردن نام کاربری و رمز عبور
+        driver.find_element(By.NAME, "username").send_keys(os.getenv("USERNAME"))
+        driver.find_element(By.NAME, "password").send_keys(os.getenv("PASSWORD"))
+        driver.find_element(By.TAG_NAME, "button").click()
 
         time.sleep(2)
+
+        # انتخاب فیلدها و پر کردن فرم (بر اساس ساختار سایت)
+        driver.find_element(By.ID, "derslik").send_keys(os.getenv("CLASSROOM"))
+        driver.find_element(By.ID, "dersyeri").send_keys(os.getenv("LOCATION"))
+        driver.find_element(By.ID, "ders").send_keys(os.getenv("COURSE"))
+        driver.find_element(By.ID, "saat").send_keys(os.getenv("HOUR"))
+        driver.find_element(By.XPATH, "//button[contains(text(),'YOKLAMAYI OLUŞTUR')]").click()
+
+        time.sleep(2)
+
+        # گرفتن اسکرین‌شات
         driver.save_screenshot("screenshot.png")
         driver.quit()
 

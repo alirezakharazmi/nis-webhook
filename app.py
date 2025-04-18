@@ -1,12 +1,13 @@
 from flask import Flask
-from attendance_bot import run_attendance
+from attendance_bot import run_attendance_bot
 
 app = Flask(__name__)
 
-@app.route("/run", methods=["GET"])
-def trigger():
-    run_attendance()
-    return "Attendance triggered", 200
+@app.route('/')
+def home():
+    return "Bot is running!"
 
-if __name__ == "__main__":
-    app.run()
+@app.route('/run')
+def run_bot():
+    run_attendance_bot()
+    return "Attendance triggered"

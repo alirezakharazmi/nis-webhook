@@ -1,12 +1,13 @@
 import os
 import time
 import requests
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
-from datetime import datetime
 
 def run_attendance_bot():
     username = os.getenv("USERNAME")
@@ -15,20 +16,21 @@ def run_attendance_bot():
     telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
     login_url = "https://pdks.nisantasi.edu.tr"
 
-    # تنظیمات Chrome
+    # تنظیمات مرورگر
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.binary_location = os.getenv("CHROME_BIN")
 
-    driver = webdriver.Chrome(executable_path="/usr/bin/chromedriver", options=chrome_options)
-    
+    service = Service("/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
     try:
         driver.get(login_url)
         time.sleep(2)
 
-        # ورود
+        # ورود به سیستم
         driver.find_element(By.NAME, "userName").send_keys(username)
         driver.find_element(By.NAME, "password").send_keys(password)
         driver.find_element(By.ID, "btnLogin").click()
@@ -38,20 +40,20 @@ def run_attendance_bot():
         driver.get("https://pdks.nisantasi.edu.tr/lecturer/attendances")
         time.sleep(2)
 
-        # انتخاب درس از dropdown
+        # انتخاب درس
         select_course = Select(driver.find_element(By.ID, "Course"))
-        select_course.select_by_index(1)  # اگر درس خاصی مد نظرته، بگو دقیقاً کدوم
+        select_course.select_by_index(1)  # درس اول، می‌تونی بر اساس عنوان هم انتخاب کنی
 
-        # انتخاب ساعت با توجه به زمان اجرا
+        # انتخاب ساعت با توجه به ساعت فعلی
         now = datetime.now().strftime("%H:%M")
         select_hour = Select(driver.find_element(By.ID, "Hour"))
         options = [option.text for option in select_hour.options]
         if now in options:
             select_hour.select_by_visible_text(now)
         else:
-            select_hour.select_by_index(0)
+            select_hour.select_by_index(0)  # fallback به گزینه اول
 
-        # کلیک روی دکمه
+        # ارسال حضور و غیاب
         driver.find_element(By.ID, "btnSubmit").click()
         time.sleep(2)
 
@@ -71,7 +73,7 @@ def run_attendance_bot():
         print("Error:", e)
         requests.post(
             f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-            data={"chat_id": telegram_chat_id, "text": f"خطا در ربات: {e}"}
+            data={"chat_id": telegram_chat_id, "text": f"خطا در اجرای ربات: {e}"}
         )
 
     finally:

@@ -7,7 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 
 def get_current_hour_option():
     now = datetime.now()
@@ -17,14 +16,15 @@ def get_current_hour_option():
 
 def run_attendance():
     try:
-        # تنظیمات headless برای کروم در render
+        # تنظیمات مرورگر برای اجرا در محیط headless (Render)
         chrome_options = Options()
+        chrome_options.binary_location = "/usr/bin/chromium-browser"
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=1920,1080")
 
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        driver = webdriver.Chrome(service=Service(), options=chrome_options)
         driver.implicitly_wait(10)
 
         # ورود به سایت
@@ -39,7 +39,7 @@ def run_attendance():
         driver.find_element(By.ID, "derslik").send_keys(os.getenv("CLASSROOM"))
         driver.find_element(By.ID, "dersyeri").send_keys(os.getenv("LOCATION"))
 
-        # انتخاب درس بر اساس COURSE_CODE
+        # انتخاب درس
         course_code = os.getenv("COURSE_CODE", "")
         course_dropdown = Select(driver.find_element(By.ID, "ders"))
         for option in course_dropdown.options:
@@ -55,11 +55,11 @@ def run_attendance():
                 saat_dropdown.select_by_visible_text(option.text)
                 break
 
-        # کلیک روی دکمه
+        # کلیک روی دکمه حضور
         driver.find_element(By.XPATH, "//button[contains(text(),'YOKLAMAYI OLUŞTUR')]").click()
         time.sleep(3)
 
-        # گرفتن اسکرین‌شات و ذخیره در مسیر امن
+        # گرفتن اسکرین‌شات
         screenshot_path = "/tmp/screenshot.png"
         driver.save_screenshot(screenshot_path)
         driver.quit()

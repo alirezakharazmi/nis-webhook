@@ -1,11 +1,19 @@
 import os
 import time
 import requests
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+
+def get_current_hour_option():
+    now = datetime.now()
+    minute = 30 if now.minute >= 30 else 0
+    hour = now.replace(minute=minute, second=0, microsecond=0)
+    return hour.strftime("%H:%M")
 
 def run_attendance():
     try:
@@ -18,7 +26,7 @@ def run_attendance():
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         driver.implicitly_wait(10)
 
-        # وارد سایت شو
+        # ورود به سایت
         driver.get("https://pdks.nisantasi.edu.tr/")
 
         # وارد کردن نام کاربری و رمز عبور
@@ -28,23 +36,37 @@ def run_attendance():
 
         time.sleep(2)
 
-        # انتخاب فیلدها و پر کردن فرم (بر اساس ساختار سایت)
+        # پر کردن فرم
         driver.find_element(By.ID, "derslik").send_keys(os.getenv("CLASSROOM"))
         driver.find_element(By.ID, "dersyeri").send_keys(os.getenv("LOCATION"))
-        driver.find_element(By.ID, "ders").send_keys(os.getenv("COURSE"))
-        driver.find_element(By.ID, "saat").send_keys(os.getenv("HOUR"))
-        driver.find_element(By.XPATH, "//button[contains(text(),'YOKLAMAYI OLUŞTUR')]").click()
 
-        time.sleep(2)
+        # انتخاب درس بر اساس COURSE_CODE
+        course_code = os.getenv("COURSE_CODE", "")
+        course_dropdown = Select(driver.find_element(By.ID, "ders"))
+        for option in course_dropdown.options:
+            if course_code in option.text:
+                course_dropdown.select_by_visible_text(option.text)
+                break
+
+        # انتخاب ساعت براساس زمان اجرا
+        saat = get_current_hour_option()
+        saat_dropdown = Select(driver.find_element(By.ID, "saat"))
+        for option in saat_dropdown.options:
+            if saat in option.text:
+                saat_dropdown.select_by_visible_text(option.text)
+                break
+
+        # کلیک روی دکمه
+        driver.find_element(By.XPATH, "//button[contains(text(),'YOKLAMAYI OLUŞTUR')]").click()
+        time.sleep(3)
 
         # گرفتن اسکرین‌شات
         driver.save_screenshot("screenshot.png")
         driver.quit()
 
-        # ارسال اسکرین‌شات به تلگرام
+        # ارسال به تلگرام
         token = os.getenv("TELEGRAM_BOT_TOKEN")
         chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
         if token and chat_id:
             url = f"https://api.telegram.org/bot{token}/sendPhoto"
             with open("screenshot.png", "rb") as img:

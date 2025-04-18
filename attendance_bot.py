@@ -1,13 +1,17 @@
-
+from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import os
 
 def run_attendance_bot():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.binary_location = os.environ.get("CHROME_BIN")
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.binary_location = os.getenv("CHROME_BIN")
 
-    driver = webdriver.Chrome(options=options)
-    ...
+    service = Service(executable_path="chromedriver")
+
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    # ادامه فرم و اسکرین‌شات...

@@ -1,82 +1,78 @@
 import os
 import time
 import requests
-from datetime import datetime
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from datetime import datetime
 
-def get_current_hour_option():
-    now = datetime.now()
-    minute = 30 if now.minute >= 30 else 0
-    hour = now.replace(minute=minute, second=0, microsecond=0)
-    return hour.strftime("%H:%M")
+def run_attendance_bot():
+    username = os.getenv("USERNAME")
+    password = os.getenv("PASSWORD")
+    telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    login_url = "https://pdks.nisantasi.edu.tr"
 
-def run_attendance():
+    # تنظیمات Chrome
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.binary_location = os.getenv("CHROME_BIN")
+
+    driver = webdriver.Chrome(executable_path="/usr/bin/chromedriver", options=chrome_options)
+    
     try:
-        # تنظیمات مرورگر برای اجرا در محیط headless (Render)
-        chrome_options = Options()
-        chrome_options.binary_location = "/usr/bin/chromium-browser"
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--window-size=1920,1080")
-
-        driver = webdriver.Chrome(service=Service(), options=chrome_options)
-        driver.implicitly_wait(10)
-
-        # ورود به سایت
-        driver.get("https://pdks.nisantasi.edu.tr/")
-        driver.find_element(By.NAME, "username").send_keys(os.getenv("USERNAME"))
-        driver.find_element(By.NAME, "password").send_keys(os.getenv("PASSWORD"))
-        driver.find_element(By.TAG_NAME, "button").click()
-
+        driver.get(login_url)
         time.sleep(2)
 
-        # پر کردن فرم
-        driver.find_element(By.ID, "derslik").send_keys(os.getenv("CLASSROOM"))
-        driver.find_element(By.ID, "dersyeri").send_keys(os.getenv("LOCATION"))
-
-        # انتخاب درس
-        course_code = os.getenv("COURSE_CODE", "")
-        course_dropdown = Select(driver.find_element(By.ID, "ders"))
-        for option in course_dropdown.options:
-            if course_code in option.text:
-                course_dropdown.select_by_visible_text(option.text)
-                break
-
-        # انتخاب ساعت براساس زمان اجرا
-        saat = get_current_hour_option()
-        saat_dropdown = Select(driver.find_element(By.ID, "saat"))
-        for option in saat_dropdown.options:
-            if saat in option.text:
-                saat_dropdown.select_by_visible_text(option.text)
-                break
-
-        # کلیک روی دکمه حضور
-        driver.find_element(By.XPATH, "//button[contains(text(),'YOKLAMAYI OLUŞTUR')]").click()
+        # ورود
+        driver.find_element(By.NAME, "userName").send_keys(username)
+        driver.find_element(By.NAME, "password").send_keys(password)
+        driver.find_element(By.ID, "btnLogin").click()
         time.sleep(3)
 
+        # ورود به بخش حضور و غیاب
+        driver.get("https://pdks.nisantasi.edu.tr/lecturer/attendances")
+        time.sleep(2)
+
+        # انتخاب درس از dropdown
+        select_course = Select(driver.find_element(By.ID, "Course"))
+        select_course.select_by_index(1)  # اگر درس خاصی مد نظرته، بگو دقیقاً کدوم
+
+        # انتخاب ساعت با توجه به زمان اجرا
+        now = datetime.now().strftime("%H:%M")
+        select_hour = Select(driver.find_element(By.ID, "Hour"))
+        options = [option.text for option in select_hour.options]
+        if now in options:
+            select_hour.select_by_visible_text(now)
+        else:
+            select_hour.select_by_index(0)
+
+        # کلیک روی دکمه
+        driver.find_element(By.ID, "btnSubmit").click()
+        time.sleep(2)
+
         # گرفتن اسکرین‌شات
-        screenshot_path = "/tmp/screenshot.png"
+        screenshot_path = "screenshot.png"
         driver.save_screenshot(screenshot_path)
-        driver.quit()
 
         # ارسال به تلگرام
-        token = os.getenv("TELEGRAM_BOT_TOKEN")
-        chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
-        if token and chat_id:
-            telegram_url = f"https://api.telegram.org/bot{token}/sendPhoto"
-            with open(screenshot_path, "rb") as photo:
-                response = requests.post(
-                    telegram_url,
-                    data={"chat_id": chat_id},
-                    files={"photo": photo}
-                )
-                print("Telegram response:", response.text)
+        with open(screenshot_path, "rb") as photo:
+            requests.post(
+                f"https://api.telegram.org/bot{telegram_token}/sendPhoto",
+                data={"chat_id": telegram_chat_id},
+                files={"photo": photo}
+            )
 
     except Exception as e:
-        print(f"Error: {e}")
+        print("Error:", e)
+        requests.post(
+            f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+            data={"chat_id": telegram_chat_id, "text": f"خطا در ربات: {e}"}
+        )
+
+    finally:
+        driver.quit()

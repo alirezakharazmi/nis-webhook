@@ -17,6 +17,7 @@ def get_current_hour_option():
 
 def run_attendance():
     try:
+        # تنظیمات headless برای کروم در render
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
@@ -28,8 +29,6 @@ def run_attendance():
 
         # ورود به سایت
         driver.get("https://pdks.nisantasi.edu.tr/")
-
-        # وارد کردن نام کاربری و رمز عبور
         driver.find_element(By.NAME, "username").send_keys(os.getenv("USERNAME"))
         driver.find_element(By.NAME, "password").send_keys(os.getenv("PASSWORD"))
         driver.find_element(By.TAG_NAME, "button").click()
@@ -60,17 +59,24 @@ def run_attendance():
         driver.find_element(By.XPATH, "//button[contains(text(),'YOKLAMAYI OLUŞTUR')]").click()
         time.sleep(3)
 
-        # گرفتن اسکرین‌شات
-        driver.save_screenshot("screenshot.png")
+        # گرفتن اسکرین‌شات و ذخیره در مسیر امن
+        screenshot_path = "/tmp/screenshot.png"
+        driver.save_screenshot(screenshot_path)
         driver.quit()
 
         # ارسال به تلگرام
         token = os.getenv("TELEGRAM_BOT_TOKEN")
         chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
         if token and chat_id:
-            url = f"https://api.telegram.org/bot{token}/sendPhoto"
-            with open("screenshot.png", "rb") as img:
-                requests.post(url, data={"chat_id": chat_id}, files={"photo": img})
+            telegram_url = f"https://api.telegram.org/bot{token}/sendPhoto"
+            with open(screenshot_path, "rb") as photo:
+                response = requests.post(
+                    telegram_url,
+                    data={"chat_id": chat_id},
+                    files={"photo": photo}
+                )
+                print("Telegram response:", response.text)
 
     except Exception as e:
         print(f"Error: {e}")

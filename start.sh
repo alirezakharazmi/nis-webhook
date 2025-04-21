@@ -1,4 +1,3 @@
-cat > start.sh <<EOF
 #!/bin/bash
 
 mkdir -p chrome
@@ -17,4 +16,3 @@ export CHROME_BIN=$PWD/chrome/opt/google/chrome/google-chrome
 export PATH=$PWD/chrome/chromedriver-linux64:$PATH
 
 gunicorn app:app --bind 0.0.0.0:$PORT
-EOF

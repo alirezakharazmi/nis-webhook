@@ -5,15 +5,17 @@ import os
 
 def run_attendance_bot():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless=new")  # مهم: ورژن جدید Headless
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--remote-debugging-port=9222")  # اینم مهمه
 
     # مسیر دقیق کروم و درایور
     chrome_path = "/opt/render/project/src/chrome/opt/google/chrome/google-chrome"
     chromedriver_path = "/opt/render/project/src/chrome/chromedriver-linux64/chromedriver"
 
-    # بررسی وجود فایل‌ها
     if not os.path.exists(chrome_path):
         raise FileNotFoundError(f"Chrome binary not found at: {chrome_path}")
     if not os.path.exists(chromedriver_path):

@@ -1,4 +1,3 @@
-cat > app.py <<EOF
 from flask import Flask
 from attendance_bot import run_attendance_bot
 
@@ -12,4 +11,3 @@ def home():
 def run_bot():
     run_attendance_bot()
     return "Attendance triggered"
-EOF

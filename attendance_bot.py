@@ -5,14 +5,15 @@ import os
 
 def run_attendance_bot():
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")  # مهم: ورژن جدید Headless
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--remote-debugging-port=9222")  # اینم مهمه
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--window-size=1920x1080")
 
-    # مسیر دقیق کروم و درایور
+    # مسیر دقیق نصب شده‌ی Chrome و Chromedriver در Render
     chrome_path = "/opt/render/project/src/chrome/opt/google/chrome/google-chrome"
     chromedriver_path = "/opt/render/project/src/chrome/chromedriver-linux64/chromedriver"
 

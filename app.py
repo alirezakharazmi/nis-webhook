@@ -13,4 +13,4 @@ def run_bot():
         run_attendance_bot()
         return "Attendance triggered"
     except Exception as e:
-        return f"Error: {str(e)}", 500
+        return f"Error: {str(e)}", 500  # وضعیت خطا به‌صورت استاندارد

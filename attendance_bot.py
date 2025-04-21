@@ -1,31 +1,15 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-import os
+cat > app.py <<EOF
+from flask import Flask
+from attendance_bot import run_attendance_bot
 
-def run_attendance_bot():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--remote-debugging-port=9222")
-    chrome_options.add_argument("--window-size=1920x1080")
+app = Flask(__name__)
 
-    # مسیر دقیق نصب شده‌ی Chrome و Chromedriver در Render
-    chrome_path = "/opt/render/project/src/chrome/opt/google/chrome/google-chrome"
-    chromedriver_path = "/opt/render/project/src/chrome/chromedriver-linux64/chromedriver"
+@app.route('/')
+def home():
+    return "Bot is running!"
 
-    if not os.path.exists(chrome_path):
-        raise FileNotFoundError(f"Chrome binary not found at: {chrome_path}")
-    if not os.path.exists(chromedriver_path):
-        raise FileNotFoundError(f"Chromedriver not found at: {chromedriver_path}")
-
-    chrome_options.binary_location = chrome_path
-    service = Service(executable_path=chromedriver_path)
-
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    print("Attendance triggered")
-    driver.quit()
+@app.route('/run')
+def run_bot():
+    run_attendance_bot()
+    return "Attendance triggered"
+EOF

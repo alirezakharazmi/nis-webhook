@@ -8,6 +8,8 @@ def run_attendance_bot():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")  # برای محیط بدون GPU
+    chrome_options.add_argument("--remote-debugging-port=9222")  # جلوگیری از crash
 
     chrome_path = "/opt/render/project/src/chrome/opt/google/chrome/google-chrome"
     chromedriver_path = "/opt/render/project/src/chrome/chromedriver-linux64/chromedriver"

@@ -1,4 +1,3 @@
-cat > attendance_bot.py <<EOF
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -22,7 +21,5 @@ def run_attendance_bot():
     service = Service(executable_path=chromedriver_path)
 
     driver = webdriver.Chrome(service=service, options=chrome_options)
-
     print("Attendance triggered")
     driver.quit()
-EOF
